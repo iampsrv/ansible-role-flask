@@ -9,6 +9,19 @@
   notify: Restart Flask Application
   tags: 
     - clone_repo
+    
+- name: Ensure virtualenv is installed
+  pip:
+    name: virtualenv
+  tags:
+    - setup_venv
+    
+- name: Create a virtual environment
+  command: python3 -m venv "{{ repo_dest }}/venv"
+  args:
+    creates: "{{ repo_dest }}/venv"
+  tags:
+    - setup_venv
 
 - name: Install Python dependencies
   pip:
