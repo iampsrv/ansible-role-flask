@@ -5,31 +5,23 @@
     dest: "{{ repo_dest }}"
     update: yes
   register: git_clone
-  changed_when: "'Updated' in git_clone.stdout"
   notify: Restart Flask Application
-  tags: 
+  tags:
     - clone_repo
-    
-- name: Ensure virtualenv is installed
-  pip:
-    name: virtualenv
-  tags:
-    - setup_venv
-    
-- name: Create a virtual environment
-  command: python3 -m venv "{{ repo_dest }}/venv"
-  args:
-    creates: "{{ repo_dest }}/venv"
-  tags:
-    - setup_venv
 
-- name: Install Python dependencies
-  pip:
-    requirements: "{{ requirements_file }}"
-  tags: 
-    - install_dependencies
+- name: Create a virtual environment
+  ansible.builtin.command: python3 -m venv /home/ubuntu/venv
+  args:
+    creates: /home/ubuntu/venv
+
+- name: Install requirements in virtualenv
+  ansible.builtin.command: /home/ubuntu/venv/bin/pip install -r /home/ubuntu/application/req.txt
+  environment:
+    PATH: "/home/ubuntu/venv/bin:{{ ansible_env.PATH }}"
+  tags:
+    - install_requirements
 
 - name: Start the Flask application
-  shell: nohup python3 "{{ app_path }}" > /dev/null 2>&1 &
-  tags: 
+  shell: nohup /home/ubuntu/venv/bin/python "{{ app_path }}" > /dev/null 2>&1 &
+  tags:
     - start_app
