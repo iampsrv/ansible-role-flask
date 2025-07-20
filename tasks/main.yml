@@ -9,19 +9,27 @@
   tags:
     - clone_repo
 
-- name: Create a virtual environment
-  ansible.builtin.command: python3 -m venv /home/ubuntu/venv
+- name: Ensure python3.12-venv is installed
+  apt:
+    name: python3.12-venv
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Recreate virtual environment (force clean setup)
+  ansible.builtin.shell: rm -rf {{ venv_path }} && python3 -m venv {{ venv_path }}
+
+- name: Ensure pip is installed in the virtualenv
+  command: "{{ venv_path }}/bin/python -m ensurepip --upgrade"
   args:
-    creates: /home/ubuntu/venv
+    creates: "{{ venv_path }}/bin/pip"
 
 - name: Install requirements in virtualenv
-  ansible.builtin.command: /home/ubuntu/venv/bin/pip install -r /home/ubuntu/application/req.txt
+  command: "{{ venv_path }}/bin/pip install -r {{ requirements_file }}"
   environment:
-    PATH: "/home/ubuntu/venv/bin:{{ ansible_env.PATH }}"
-  tags:
-    - install_requirements
+    PATH: "{{ venv_path }}/bin:{{ ansible_env.PATH }}"
 
 - name: Start the Flask application
-  shell: nohup /home/ubuntu/venv/bin/python "{{ app_path }}" > /dev/null 2>&1 &
+  shell: nohup {{ venv_path }}/bin/python "{{ app_path }}" > /dev/null 2>&1 &
   tags:
     - start_app
